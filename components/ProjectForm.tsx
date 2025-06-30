@@ -15,6 +15,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, onClose, onSave, proj
     owner: '',
     designer: '',
     deadline: '',
+    startDate: '',
+    endDate: ''
   });
   const [steps, setSteps] = useState<(Omit<Step, 'id'>)[]>([]);
   const [stepName, setStepName] = useState('');
@@ -28,6 +30,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, onClose, onSave, proj
         owner: projectToEdit.owner,
         designer: projectToEdit.designer || '',
         deadline: projectToEdit.deadline ? projectToEdit.deadline.split('T')[0] : '', // Format for date input
+        startDate: projectToEdit.startDate ? projectToEdit.startDate.split('T')[0] : '',
+        endDate: projectToEdit.endDate ? projectToEdit.endDate.split('T')[0] : '',
       });
       setSteps(projectToEdit.steps || []);
     } else {
@@ -37,6 +41,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, onClose, onSave, proj
         owner: '',
         designer: '',
         deadline: '',
+        startDate: '',
+        endDate: '',
       });
       setSteps([]);
     }
@@ -75,8 +81,24 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, onClose, onSave, proj
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const toUtcIsoString = (localDateString?: string): string | undefined => {
+        if (!localDateString) return undefined;
+        // Parse YYYY-MM-DD and create a date object in UTC to avoid timezone-related "one day off" errors.
+        const parts = localDateString.split('-').map(p => parseInt(p, 10));
+        return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2])).toISOString();
+    };
+
     const finalSteps = steps.map((s, i) => ('id' in s ? s : { ...s, id: `${new Date().getTime()}-${i}` })) as Step[];
-    onSave(projectToEdit ? { ...projectToEdit, ...projectData, steps: finalSteps } : { ...projectData, steps: finalSteps });
+    
+    const projectPayload = {
+        ...projectData,
+        deadline: toUtcIsoString(projectData.deadline),
+        startDate: toUtcIsoString(projectData.startDate),
+        endDate: toUtcIsoString(projectData.endDate),
+    };
+
+    onSave(projectToEdit ? { ...projectToEdit, ...projectPayload, steps: finalSteps } : { ...projectPayload, steps: finalSteps });
     onClose();
   };
 
@@ -107,9 +129,20 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, onClose, onSave, proj
               <input type="text" name="designer" id="designer" value={projectData.designer} onChange={handleChange} className="w-full px-4 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
             </div>
           </div>
-          <div className="mt-4 space-y-1">
-            <label htmlFor="deadline" className="text-sm font-medium text-slate-700 dark:text-slate-300">កាលបរិច្ឆេទ​កំណត់</label>
-            <input type="date" name="deadline" id="deadline" value={projectData.deadline} onChange={handleChange} className="w-full px-4 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">
+            <div className="space-y-1">
+                <label htmlFor="startDate" className="text-sm font-medium text-slate-700 dark:text-slate-300">ថ្ងៃចាប់ផ្តើម</label>
+                <input type="date" name="startDate" id="startDate" value={projectData.startDate} onChange={handleChange} className="w-full px-4 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
+            </div>
+            <div className="space-y-1">
+                <label htmlFor="endDate" className="text-sm font-medium text-slate-700 dark:text-slate-300">ថ្ងៃបញ្ចប់</label>
+                <input type="date" name="endDate" id="endDate" value={projectData.endDate} onChange={handleChange} className="w-full px-4 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
+            </div>
+            <div className="space-y-1">
+                <label htmlFor="deadline" className="text-sm font-medium text-slate-700 dark:text-slate-300">កាលបរិច្ឆេទ​កំណត់</label>
+                <input type="date" name="deadline" id="deadline" value={projectData.deadline} onChange={handleChange} className="w-full px-4 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
+            </div>
           </div>
 
           <div className="mt-6">

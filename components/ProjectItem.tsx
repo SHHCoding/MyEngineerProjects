@@ -12,6 +12,12 @@ interface ProjectItemProps {
   onAddStep: (projectId: string, stepName: string) => void;
 }
 
+const statusTexts: { [key in ProjectStatus]: string } = {
+    [ProjectStatus.NotStarted]: 'មិនទាន់ចាប់ផ្តើម',
+    [ProjectStatus.InProgress]: 'កំពុង​ដំណើរការ',
+    [ProjectStatus.Done]: 'រួចរាល់',
+};
+
 const statusStyles: { [key in ProjectStatus]: { badge: string; border: string; } } = {
     [ProjectStatus.NotStarted]: {
         badge: "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
@@ -33,7 +39,7 @@ const StatusBadge: React.FC<{ status: ProjectStatus }> = ({ status }) => {
       <div className="flex items-center gap-2">
         {isWorking && <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span></span>}
         <span className={`px-3 py-1 text-xs font-semibold rounded-full inline-block ${statusStyles[status].badge}`}>
-          {status}
+          {statusTexts[status]}
         </span>
       </div>
     );
@@ -95,7 +101,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({ project, onEdit, onDelete, on
   
   const [isAddingStep, setIsAddingStep] = useState(false);
   const [newStepName, setNewStepName] = useState('');
-
+  
   const isOverdue = deadline ? new Date(deadline) < new Date() && status !== ProjectStatus.Done : false;
 
   const totalSteps = steps?.length || 0;

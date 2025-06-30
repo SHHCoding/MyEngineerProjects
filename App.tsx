@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTheme } from './hooks/useTheme';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import type { Project, Step } from './types';
@@ -30,6 +30,37 @@ const App: React.FC = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const projectsToUpdate: string[] = [];
+    const updatedProjects = projects.map(p => {
+        if (p.status === ProjectStatus.NotStarted && p.startDate) {
+            const startDate = new Date(p.startDate);
+            if (startDate <= today) {
+                projectsToUpdate.push(p.name);
+                return { ...p, status: ProjectStatus.InProgress };
+            }
+        }
+        return p;
+    });
+
+    const hasChanges = projects.some((p, i) => p.status !== updatedProjects[i].status);
+
+    if (hasChanges) {
+        setProjects(updatedProjects);
+        const updatedNames = updatedProjects.filter((p, i) => projects[i].status !== p.status).map(p => p.name);
+        
+        if (updatedNames.length === 1) {
+            setToast({ message: `គម្រោង "${updatedNames[0]}" បានចាប់ផ្តើមដោយស្វ័យប្រវត្តិ។`, type: 'success' });
+        } else if (updatedNames.length > 1) {
+            setToast({ message: `${updatedNames.length} គម្រោងត្រូវបានចាប់ផ្តើមដោយស្វ័យប្រវត្តិ។`, type: 'success' });
+        }
+    }
+  }, [projects, setProjects]);
+
+
   const handleSaveProject = (projectData: Omit<Project, 'id' | 'status'> | Project) => {
     let isEditing = false;
     
@@ -49,7 +80,8 @@ const App: React.FC = () => {
           }
         } else {
           updatedProject.status = ProjectStatus.InProgress;
-          updatedProject.endDate = undefined; // A project can't be finished if steps are incomplete
+          // A project can be in progress but have a projected end date, so don't clear it.
+          // updatedProject.endDate = undefined; 
         }
       }
       // If totalSteps is 0, status is manual.
@@ -89,7 +121,7 @@ const App: React.FC = () => {
         ? {
             ...p,
             status: ProjectStatus.InProgress,
-            startDate: new Date().toISOString(),
+            startDate: p.startDate || new Date().toISOString(),
           } 
         : p
     ));
@@ -102,7 +134,7 @@ const App: React.FC = () => {
           ? {
               ...p,
               status: ProjectStatus.Done,
-              endDate: new Date().toISOString(),
+              endDate: p.endDate || new Date().toISOString(),
             } 
           : p
       ));
@@ -144,7 +176,8 @@ const App: React.FC = () => {
             } else {
                 // If any step is incomplete, it's InProgress.
                 newStatus = ProjectStatus.InProgress;
-                newEndDate = undefined; // It can't be 'Done' so remove end date.
+                // Don't clear a manually set end date.
+                // newEndDate = undefined; 
             }
         }
         
@@ -177,7 +210,8 @@ const App: React.FC = () => {
         // If a step is added to a 'Done' project, it should become 'In Progress' again.
         if (p.status === ProjectStatus.Done) {
             newStatus = ProjectStatus.InProgress;
-            newEndDate = undefined;
+            // Don't clear a manually set end date.
+            // newEndDate = undefined;
         }
 
         return {
@@ -269,7 +303,7 @@ const App: React.FC = () => {
         if (!p.deadline) return false;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const deadline = new Date(`${p.deadline}T00:00:00`);
+        const deadline = new Date(p.deadline); // Handles ISO string correctly
         switch (filters.time) {
           case 'week': {
             const startOfWeek = new Date(today);
@@ -279,9 +313,9 @@ const App: React.FC = () => {
             return deadline >= startOfWeek && deadline <= endOfWeek;
           }
           case 'month':
-            return deadline.getMonth() === today.getMonth() && deadline.getFullYear() === today.getFullYear();
+            return deadline.getUTCMonth() === today.getUTCMonth() && deadline.getUTCFullYear() === today.getUTCFullYear();
           case 'year':
-            return deadline.getFullYear() === today.getFullYear();
+            return deadline.getUTCFullYear() === today.getUTCFullYear();
           default:
             return true;
         }
