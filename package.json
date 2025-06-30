@@ -1,0 +1,6 @@
+{
+  "name": "engipro-project-manager",
+  "version": "1.0.0",
+  "description": "A web application for tracking and managing civil engineering projects.",
+  "private": true
+}
