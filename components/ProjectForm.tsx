@@ -125,7 +125,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ isOpen, onClose, onSave, proj
               <input type="text" name="owner" id="owner" value={projectData.owner} onChange={handleChange} required className="w-full px-4 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
             </div>
             <div className="space-y-1">
-              <label htmlFor="designer" className="text-sm font-medium text-slate-700 dark:text-slate-300">វិស្វករ​រចនា</label>
+              <label htmlFor="designer" className="text-sm font-medium text-slate-700 dark:text-slate-300">វិស្វករគ្រឿងផ្គុំ</label>
               <input type="text" name="designer" id="designer" value={projectData.designer} onChange={handleChange} className="w-full px-4 py-2 bg-white dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
             </div>
           </div>
